@@ -1,10 +1,10 @@
-import { LLMProvider } from "../llm/LLMProvider";
-import { Proposal } from "./types/Proposal";
-import { VaultReader } from "../vault/VaultReader";
-import { NoteAnalyzer } from "../analyzer/NoteAnalyzer";
-import { NoteEditor } from "../editor/NoteEditor";
-import { ChangeReviewer } from "../reviewer/ChangeReviewer";
-import { ChangePlanner } from "../planner/ChangePlanner";
+import { LLMProvider } from "../llm/LLMProvider.js";
+import { Proposal } from "./types/Proposal.js";
+import { VaultReader } from "../vault/VaultReader.js";
+import { NoteAnalyzer } from "../analyzer/NoteAnalyzer.js";
+import { NoteEditor } from "../editor/NoteEditor.js";
+import { ChangeReviewer } from "../reviewer/ChangeReviewer.js";
+import { ChangePlanner } from "../planner/ChangePlanner.js";
 
 export class Pipeline {
     private vaultReader: VaultReader;

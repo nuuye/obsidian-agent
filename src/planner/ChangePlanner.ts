@@ -1,5 +1,5 @@
-import { Proposal } from "../core/types/Proposal";
-import { ProposedChange } from "../core/types/Changes";
+import { Proposal } from "../core/types/Proposal.js";
+import { ProposedChange } from "../core/types/Changes.js";
 
 export class ChangePlanner {
     /**

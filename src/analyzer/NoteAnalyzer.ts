@@ -1,5 +1,5 @@
-import { LLMProvider } from "../llm/LLMProvider";
-import { Analysis } from "../core/types/Analysis";
+import { LLMProvider } from "../llm/LLMProvider.js";
+import { Analysis } from "../core/types/Analysis.js";
 
 export class NoteAnalyzer {
     constructor(private llm: LLMProvider) {}
@@ -23,7 +23,7 @@ export class NoteAnalyzer {
         """
         `;
 
-        const response = await this.llm.generate(prompt);
+        const response = await this.llm.generate(prompt, { skipThinking: true });
 
         // Simplification pour l'exemple : on suppose que le LLM retourne un JSON valide.
         // Dans une version de production, il faudra parser et valider (ex: avec Zod).

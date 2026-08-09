@@ -1,4 +1,4 @@
-import { ProposedChange } from "./Changes";
+import { ProposedChange } from "./Changes.js";
 
 export interface Proposal {
     originalContent: string;

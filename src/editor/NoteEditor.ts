@@ -1,5 +1,5 @@
-import { LLMProvider } from "../llm/LLMProvider";
-import { Analysis } from "../core/types/Analysis";
+import { LLMProvider } from "../llm/LLMProvider.js";
+import { Analysis } from "../core/types/Analysis.js";
 
 export class NoteEditor {
     constructor(private llm: LLMProvider) {}
@@ -20,7 +20,7 @@ export class NoteEditor {
         }
         
         Retourne UNIQUEMENT le code Markdown de la note modifiée. Ne fais pas d'introduction ou de conclusion.
-        
+
         Contenu original :
         """
         ${originalContent}

@@ -1,4 +1,4 @@
-import { LLMProvider } from "../llm/LLMProvider";
+import { LLMProvider } from "../llm/LLMProvider.js";
 
 // Interface interne pour le format de retour attendu du LLM
 interface ChangesJSON {
@@ -39,7 +39,7 @@ export class ChangeReviewer {
         """
         `;
 
-        const response = await this.llm.generate(prompt);
+        const response = await this.llm.generate(prompt, { skipThinking: true });
 
         try {
             const cleanJson = response.replace(/```json\n?|\n?```/g, "").trim();

@@ -1,5 +1,8 @@
-import { Pipeline } from "../core/Pipeline";
-import { OllamaProvider } from "../llm/OllamaProvider";
+import { Pipeline } from "../core/Pipeline.js";
+import { OllamaProvider } from "../llm/OllamaProvider.js";
+import { UserInterface } from "./UserInterface.js";
+import { MarkdownEditor } from "../markdown/MarkdownEditor.js";
+import { VaultWriter } from "../vault/VaultWriter.js";
 
 async function main() {
     const args = process.argv.slice(2);
@@ -7,25 +10,45 @@ async function main() {
 
     if (!filePath) {
         console.error("Erreur : Veuillez fournir le chemin vers la note Obsidian.");
-        console.log("Exemple : npm run dev -- /chemin/vers/vault/Inbox/docker.md");
         process.exit(1);
     }
 
-    console.log(`Démarrage de l'agent pour : ${filePath}`);
-
-    // Injection de dépendance basique
-    const llmProvider = new OllamaProvider();
+    // Initialisation des dépendances (tu peux changer "mistral" par "llama3" selon ton modèle local)
+    const llmProvider = new OllamaProvider("qwen3:14b");
     const pipeline = new Pipeline(llmProvider);
+    const ui = new UserInterface();
+    const markdownEditor = new MarkdownEditor();
+    const vaultWriter = new VaultWriter();
 
     try {
+        // 1. Exécution du pipeline complet
         const proposal = await pipeline.run(filePath);
 
-        // TODO: Interface interactive CLI (ex: Inquirer.js) pour présenter le "Proposal"
-        // et permettre à l'utilisateur d'accepter/refuser les changements.
+        if (!proposal) {
+            console.log("Processus interrompu ou aucune proposition générée.");
+            return;
+        }
 
-        console.log("Analyse terminée. En attente de l'implémentation de l'interface de validation.");
+        // 2. Validation par l'utilisateur
+        const acceptedChanges = await ui.promptValidation(proposal);
+
+        // 3. Application des modifications
+        const finalContent = markdownEditor.applyChanges(proposal, acceptedChanges);
+
+        // 4. Sauvegarde sécurisée
+        if (acceptedChanges.length > 0) {
+            console.log("\nPréparation de l'enregistrement...");
+
+            // -> NOUVEAU : Création du backup avant toute modification
+            await vaultWriter.backupNote(filePath, proposal.originalContent);
+
+            // Écrasement du fichier avec les nouvelles données
+            await vaultWriter.writeNote(filePath, finalContent);
+        } else {
+            console.log("Aucun changement appliqué. Le fichier original reste intact.");
+        }
     } catch (error) {
-        console.error("Une erreur critique est survenue :", error);
+        console.error("\n❌ Une erreur critique est survenue :", error);
     }
 }
 

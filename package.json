@@ -1,6 +1,7 @@
 {
   "name": "obsidian-agent",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "dev": "tsx src/cli/index.ts",
@@ -15,5 +16,8 @@
     "@types/node": "^26.2.0",
     "tsx": "^4.23.11",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.5.2"
   }
 }
