@@ -12,10 +12,12 @@ export class OllamaProvider implements LLMProvider {
     async generate(prompt: string, options?: GenerateOptions): Promise<string> {
         let finalPrompt = prompt;
 
-        // Si on veut désactiver la réflexion, on injecte une instruction critique
         if (options?.skipThinking) {
             finalPrompt += `\n\nINSTRUCTION CRITIQUE : Ne génère AUCUNE chaîne de pensée, aucune explication et n'utilise pas de balise <think>. Donne UNIQUEMENT la réponse finale demandée.`;
         }
+
+        // Si on a un callback onToken, on active le stream, sinon false
+        const isStreaming = !!options?.onToken;
 
         try {
             const response = await fetch(`${this.baseUrl}/api/generate`, {
@@ -24,22 +26,45 @@ export class OllamaProvider implements LLMProvider {
                 body: JSON.stringify({
                     model: this.model,
                     prompt: finalPrompt,
-                    stream: false,
+                    stream: isStreaming,
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
+            if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+
+            // GESTION DU STREAMING
+            if (isStreaming && response.body) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    // Ollama renvoie du JSON ligne par ligne (NDJSON)
+                    const lines = chunk.split("\n").filter(Boolean);
+
+                    for (const line of lines) {
+                        const parsed = JSON.parse(line);
+                        if (parsed.response) {
+                            fullText += parsed.response;
+                            // On envoie le bout de texte à notre application en temps réel
+                            options.onToken!(parsed.response);
+                        }
+                    }
+                }
+                return fullText;
             }
 
+            // GESTION CLASSIQUE (sans stream)
             const data = await response.json();
             let responseText = data.response;
 
-            // Nettoyage de sécurité : si le modèle a quand même "pensé", on retire les balises
             if (options?.skipThinking) {
                 responseText = responseText.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
             }
-
             return responseText;
         } catch (error) {
             console.error("❌ Erreur de connexion à Ollama :", error);

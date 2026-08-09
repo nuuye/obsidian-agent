@@ -1,5 +1,6 @@
 export interface GenerateOptions {
     skipThinking?: boolean;
+    onToken?: (chunk: string) => void;
 }
 
 export interface LLMProvider {
