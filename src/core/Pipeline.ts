@@ -104,7 +104,8 @@ export class Pipeline {
         // Fin totale
         clearInterval(spinnerTimer);
         bar.stop();
-
+        
+        console.log(analysis)
         return proposal;
     }
 }

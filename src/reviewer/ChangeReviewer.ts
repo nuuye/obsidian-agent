@@ -1,4 +1,5 @@
 import { LLMProvider } from "../llm/LLMProvider.js";
+import { parseJsonFromLLM } from "../utils/llmJson.js";
 
 // Interface interne pour le format de retour attendu du LLM
 interface ChangesJSON {
@@ -39,13 +40,7 @@ export class ChangeReviewer {
         """
         `;
 
-        const response = await this.llm.generate(prompt, { skipThinking: true });
-
-        try {
-            const cleanJson = response.replace(/```json\n?|\n?```/g, "").trim();
-            return JSON.parse(cleanJson) as ChangesJSON;
-        } catch (e) {
-            throw new Error("Échec du parsing JSON lors de la revue des changements.");
-        }
+        const response = await this.llm.generate(prompt);
+        return parseJsonFromLLM<ChangesJSON>(response, "Échec du parsing JSON lors de la revue des changements");
     }
 }

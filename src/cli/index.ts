@@ -3,6 +3,8 @@ import { OllamaProvider } from "../llm/OllamaProvider.js";
 import { UserInterface } from "./UserInterface.js";
 import { MarkdownEditor } from "../markdown/MarkdownEditor.js";
 import { VaultWriter } from "../vault/VaultWriter.js";
+import { GroqProvider } from "../llm/GroqProvider.js";
+import 'dotenv/config';
 
 async function main() {
     const args = process.argv.slice(2);
@@ -13,8 +15,13 @@ async function main() {
         process.exit(1);
     }
 
+    const modelName = process.env.GROQ_LLM_MODEL || "llama3-8b-8192";
+    
+    console.log(`\nModèle LLM chargé via Groq : \x1b[36m${modelName}\x1b[0m\n`);
+
     // Initialisation des dépendances (tu peux changer "mistral" par "llama3" selon ton modèle local)
-    const llmProvider = new OllamaProvider("qwen3:14b");
+    //const llmProvider = new OllamaProvider(process.env.LLM_MODEL);
+    const llmProvider = new GroqProvider(modelName);
     const pipeline = new Pipeline(llmProvider);
     const ui = new UserInterface();
     const markdownEditor = new MarkdownEditor();
@@ -48,7 +55,7 @@ async function main() {
             console.log("Aucun changement appliqué. Le fichier original reste intact.");
         }
     } catch (error) {
-        console.error("\n❌ Une erreur critique est survenue :", error);
+        console.error("\nUne erreur critique est survenue :", error);
     }
 }
 
