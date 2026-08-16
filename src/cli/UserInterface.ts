@@ -4,34 +4,34 @@ import { ProposedChange } from "../core/types/Changes.js";
 
 export class UserInterface {
     /**
-     * Présente le Proposal à l'utilisateur via un menu interactif et
-     * retourne la liste des changements avec leur nouveau statut.
+     * Giving a proposal to the user with an interactive menu
+     * return the change list with updated status
      */
     async promptValidation(proposal: Proposal): Promise<ProposedChange[]> {
         console.log("\n========================================");
-        console.log("ANALYSE TERMINÉE : PROPOSITION DE MODIFICATIONS");
+        console.log("END OF ANALYSIS: MODIFICATIONS PROPOSAL");
         console.log("========================================\n");
 
         if (proposal.changes.length === 0) {
-            console.log("Aucun changement significatif n'a été détecté par l'agent.");
+            console.log("No proposal was given by the agent.");
             return [];
         }
 
-        // 1. On prépare les choix pour le prompt Inquirer
+        // 1. Preparing choices for the prompt inquirer
         const choices = proposal.changes.map((change) => ({
             name: `[${change.type.toUpperCase()}] ${change.description}`,
-            value: change.id, // C'est l'ID qui sera retourné par Inquirer
-            checked: true, // Par défaut, on présélectionne tous les changements
+            value: change.id,
+            checked: true, // we accept all changes by default
         }));
 
-        // 2. On lance l'interface interactive dans le terminal
+        // 2. Launching interactive interface in the terminal
         const selectedChangeIds = await checkbox({
-            message: "Utilisez [Espace] pour sélectionner/désélectionner, et [Entrée] pour valider :",
+            message: "Use [space] for selecting/unselecting, and [Enter] to accept :",
             choices: choices,
-            loop: false, // Empêche le curseur de boucler de bas en haut pour plus de clarté
+            loop: false,
         });
 
-        // 3. On met à jour le statut de chaque changement en fonction des choix
+        // 3. Updating status depending on user's choice
         const finalChanges = proposal.changes.map((change) => {
             const isAccepted = selectedChangeIds.includes(change.id);
             return {
@@ -40,11 +40,11 @@ export class UserInterface {
             };
         });
 
-        // Petit feedback visuel après validation
+        // Small visual feedback
         const acceptedCount = finalChanges.filter((c) => c.status === "accepted").length;
-        console.log(`\n👉 Vous avez accepté ${acceptedCount} changement(s) sur ${proposal.changes.length}.`);
+        console.log(`\n👉 You accepted ${acceptedCount} change(s) on ${proposal.changes.length}.`);
 
-        // On retourne uniquement les changements acceptés pour la suite du pipeline
+        // Returning only accepted changes
         return finalChanges.filter((c) => c.status === "accepted");
     }
 }

@@ -1,4 +1,4 @@
-import { LLMProvider, GenerateOptions } from "./LLMProvider.js";
+import { LLMProvider, GenerateOptions } from "./types/LLMProvider.js";
 
 export class OllamaProvider implements LLMProvider {
     private baseUrl: string;

@@ -3,23 +3,23 @@ import { ProposedChange } from "../core/types/Changes.js";
 
 export class MarkdownEditor {
     /**
-     * Construit le contenu final de la note en fonction des changements acceptés.
+     * Build the final content depending on accepted changes
      */
     applyChanges(proposal: Proposal, acceptedChanges: ProposedChange[]): string {
-        // Si l'utilisateur a tout refusé, on retourne l'original
+        // If the user declined everything, we return the original note
         if (acceptedChanges.length === 0) {
             return proposal.originalContent;
         }
 
-        // Si l'utilisateur a tout accepté, on retourne la version modifiée complète
+        // If the user accepted everythink, we return the complete new note
         if (acceptedChanges.length === proposal.changes.length) {
             return proposal.modifiedContent;
         }
 
-        // TODO: Implémenter la logique complexe d'application partielle des modifications.
-        // Cela nécessite généralement d'utiliser les diffs ou de refaire un appel ciblé au LLM.
+        // TODO: Implement partial modified note logic
+        // Might need to use LLM call again
         console.warn(
-            "[WARN] L'application partielle des changements n'est pas encore complètement implémentée. Application totale par défaut."
+            "[WARN] Applying partial changes is not implemented yet. Complete changes are going to be returned."
         );
         return proposal.modifiedContent;
     }

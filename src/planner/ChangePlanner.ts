@@ -3,22 +3,20 @@ import { ProposedChange } from "../core/types/Changes.js";
 
 export class ChangePlanner {
     /**
-     * Ne fait pas appel au LLM. Il transforme le Changes JSON en Proposal.
+     * Changing changes into proposal for the user. Not calling any LLM
      */
     createProposal(originalContent: string, modifiedContent: string, changesJson: any): Proposal {
-        // Garde défensive : si le LLM a renvoyé un JSON valide mais sans le
-        // champ "changes" attendu (ou un type inattendu), on ne plante pas
-        // silencieusement sur un .map() — on repart d'une liste vide et on prévient.
+        
         const rawChanges = Array.isArray(changesJson?.changes) ? changesJson.changes : [];
         if (rawChanges.length === 0 && changesJson?.changes !== undefined) {
-            console.warn("[WARN] Le JSON de revue des changements ne contient pas de liste 'changes' exploitable.");
+            console.warn("[WARN] The JSON provided by the change reviewer is not exploitable");
         }
 
         const proposedChanges: ProposedChange[] = rawChanges.map((change: any) => ({
             id: change.id,
             type: change.type,
             description: change.description,
-            status: "pending", // Initialisé en attente de validation
+            status: "pending", // Awaiting validation
         }));
 
         return {

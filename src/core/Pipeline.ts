@@ -1,6 +1,6 @@
-import { LLMProvider } from "../llm/LLMProvider.js";
+import { LLMProvider } from "../llm/types/LLMProvider.js";
 import { Proposal } from "./types/Proposal.js";
-import { VaultReader } from "../vault/VaultReader.js";
+import { FileReader } from "../vault/FileReader.js";
 import { NoteAnalyzer } from "../analyzer/NoteAnalyzer.js";
 import { NoteEditor } from "../editor/NoteEditor.js";
 import { ChangeReviewer } from "../reviewer/ChangeReviewer.js";
@@ -8,9 +8,10 @@ import { ChangePlanner } from "../planner/ChangePlanner.js";
 import { NoteIndexer } from "../vault/NoteIndexer.js";
 import "dotenv/config";
 import cliProgress from "cli-progress";
+import * as path from "path";
 
 export class Pipeline {
-    private vaultReader: VaultReader;
+    private FileReader: FileReader;
     private analyzer: NoteAnalyzer;
     private editor: NoteEditor;
     private reviewer: ChangeReviewer;
@@ -18,7 +19,7 @@ export class Pipeline {
     private indexer: NoteIndexer;
 
     constructor(private llmProvider: LLMProvider) {
-        this.vaultReader = new VaultReader();
+        this.FileReader = new FileReader();
         this.analyzer = new NoteAnalyzer(this.llmProvider);
         this.editor = new NoteEditor(this.llmProvider);
         this.reviewer = new ChangeReviewer(this.llmProvider);
@@ -29,9 +30,10 @@ export class Pipeline {
     async run(filePath: string): Promise<Proposal | null> {
         const totalSteps = 6;
         let existingNotes: string[] = [];
-        let currentStatus = "Démarrage...";
+        let currentStatus = "Launching...";
+        const noteTitle = path.basename(filePath, ".md");
 
-        // Les "frames" de notre petit loader animé
+        // Loading frames
         const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
         let frameIndex = 0;
 
@@ -43,7 +45,7 @@ export class Pipeline {
             hideCursor: true,
         });
 
-        // Fonction pour faire tourner le loader visuellement sans avancer les étapes
+        // function to spin the loader, the bar is not getting updated
         let spinnerTimer: NodeJS.Timeout | undefined;
         const startSpinner = () => {
             spinnerTimer = setInterval(() => {
@@ -52,33 +54,33 @@ export class Pipeline {
             }, 80);
         };
 
-        console.log("\nLancement de l'agent Obsidian...\n");
+        console.log("\nLaunching Obsidian agent...\n");
         bar.start(totalSteps, 0, { spinner: frames[0], status: currentStatus });
         startSpinner();
 
-        // Étape 1 : Indexation
-        currentStatus = "Indexation du Vault...";
+        // Step 1 : Indexation
+        currentStatus = "Indexing Vault...";
         const vaultPath = process.env.VAULT_PATH;
         if (vaultPath) {
             existingNotes = await this.indexer.getExistingNotes(vaultPath);
         }
         bar.update(1);
 
-        // Étape 2 : Lecture de la note
-        currentStatus = "Lecture de la note...";
-        const originalContent = await this.vaultReader.readNote(filePath);
+        // Step 2 : Reading the note
+        currentStatus = `Reading ${noteTitle}...`;
+        const originalContent = await this.FileReader.readNote(filePath);
         bar.update(2);
 
-        // Étape 3 : Analyse
-        currentStatus = "Analyse par le LLM (Réflexion en cours)...";
+        // Step 3 : Analysis (generating a JSON)
+        currentStatus = "Analyzing by LLM (thinking...)";
         const analysis = await this.analyzer.analyze(originalContent);
         bar.update(3);
 
-        // Étape 4 : Édition (On coupe le loader pour afficher le streaming proprement)
+        // Step 4 : Editing (cutting the loader in order to display the stream properly)
         clearInterval(spinnerTimer);
         bar.stop();
 
-        console.log("\n\nGénération de la nouvelle note en cours :\n");
+        console.log("\n\nGenerating the new note :\n");
         console.log("----------------------------------------");
 
         const modifiedContent = await this.editor.edit(originalContent, analysis, existingNotes, (chunk) => {
@@ -87,25 +89,25 @@ export class Pipeline {
 
         console.log("\n----------------------------------------\n");
 
-        // Reprise du loader pour la fin du pipeline
-        currentStatus = "Comparaison des versions (Génération du JSON)...";
+        // Resuming the loader to end the pipeline
+        currentStatus = "Comparing old and new version (Generating JSON)...";
         bar.start(totalSteps, 4, { spinner: frames[frameIndex], status: currentStatus });
         startSpinner();
 
-        // Étape 5 : Comparaison
+        // Step 5 : Comparing and generating a JSON with all the changes
         const changesJson = await this.reviewer.review(originalContent, modifiedContent);
         bar.update(5);
 
-        // Étape 6 : Planification
-        currentStatus = "Planification des propositions...";
+        // Step 6 : Planification
+        currentStatus = "Creating a sum up of all the changes...";
         const proposal = this.planner.createProposal(originalContent, modifiedContent, changesJson);
-        bar.update(6, { status: "Terminé !" });
+        bar.update(6, { status: "Done!" });
 
-        // Fin totale
+        // End
         clearInterval(spinnerTimer);
         bar.stop();
-        
-        console.log(analysis)
+
+        console.log(analysis);
         return proposal;
     }
 }

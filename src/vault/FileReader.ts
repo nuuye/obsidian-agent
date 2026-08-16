@@ -1,16 +1,15 @@
 import * as fs from "fs/promises";
 
-export class VaultReader {
+export class FileReader {
     /**
-     * Lit le contenu d'une note Obsidian.
-     * L'application ne modifie jamais directement le fichier original avant validation.
+     * Read the content of an obsidian note.
      */
     async readNote(filePath: string): Promise<string> {
         try {
             const content = await fs.readFile(filePath, "utf-8");
             return content;
         } catch (error) {
-            throw new Error(`Impossible de lire le fichier ${filePath}: ${error}`);
+            throw new Error(`Unable to read the file ${filePath}: ${error}`);
         }
     }
 }

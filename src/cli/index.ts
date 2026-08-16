@@ -11,51 +11,49 @@ async function main() {
     const filePath = args[0];
 
     if (!filePath) {
-        console.error("Erreur : Veuillez fournir le chemin vers la note Obsidian.");
+        console.error("Error: Please provide the path to the obsidian note.");
         process.exit(1);
     }
 
-    const modelName = process.env.GROQ_LLM_MODEL || "llama3-8b-8192";
+    const modelName = process.env.GROQ_LLM_MODEL || "openai/gpt-oss-120b";
     
-    console.log(`\nModèle LLM chargé via Groq : \x1b[36m${modelName}\x1b[0m\n`);
-
-    // Initialisation des dépendances (tu peux changer "mistral" par "llama3" selon ton modèle local)
-    //const llmProvider = new OllamaProvider(process.env.LLM_MODEL);
     const llmProvider = new GroqProvider(modelName);
     const pipeline = new Pipeline(llmProvider);
     const ui = new UserInterface();
     const markdownEditor = new MarkdownEditor();
     const vaultWriter = new VaultWriter();
+    
+    console.log(`\nLLM model loaded with Groq : \x1b[36m${modelName}\x1b[0m\n`);
 
     try {
-        // 1. Exécution du pipeline complet
+        // 1. Executing the complete pipeline
         const proposal = await pipeline.run(filePath);
 
         if (!proposal) {
-            console.log("Processus interrompu ou aucune proposition générée.");
+            console.log("Error while running the pipeline or lack of proposal.");
             return;
         }
 
-        // 2. Validation par l'utilisateur
+        // 2. User validation for each change
         const acceptedChanges = await ui.promptValidation(proposal);
 
-        // 3. Application des modifications
+        // 3.Applying modifications
         const finalContent = markdownEditor.applyChanges(proposal, acceptedChanges);
 
-        // 4. Sauvegarde sécurisée
+        // 4.Secured save
         if (acceptedChanges.length > 0) {
-            console.log("\nPréparation de l'enregistrement...");
+            console.log("\nProcessing save...");
 
-            // -> NOUVEAU : Création du backup avant toute modification
+            // Creating a backup
             await vaultWriter.backupNote(filePath, proposal.originalContent);
 
-            // Écrasement du fichier avec les nouvelles données
+            // Overwrite the file with new data
             await vaultWriter.writeNote(filePath, finalContent);
         } else {
-            console.log("Aucun changement appliqué. Le fichier original reste intact.");
+            console.log("No changes applied. Original file remain the same.");
         }
     } catch (error) {
-        console.error("\nUne erreur critique est survenue :", error);
+        console.error("\nError during pipeline execution :", error);
     }
 }
 

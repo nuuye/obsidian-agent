@@ -1,4 +1,4 @@
-import { LLMProvider } from "../llm/LLMProvider.js";
+import { LLMProvider } from "../llm/types/LLMProvider.js";
 import { Analysis } from "../core/types/Analysis.js";
 import { parseJsonFromLLM } from "../utils/llmJson.js";
 
@@ -23,6 +23,8 @@ export class NoteAnalyzer {
             "missingInformation": [{ "topic": "...", "reason": "..." , "origin": "gap | authorDoubt", "quote": "..."}]
         }
 
+        L'objet schema sert à identifier l'utilité et la possibilité d'avoir un schema pour cette note.
+
         RÈGLE STRICTE POUR LE SCHÉMA :
         Si "useful" est true, la valeur "type" dans l'objet "schema" DOIT obligatoirement être l'une de ces 4 valeurs exactes : "graph TD", "sequenceDiagram", ou "timeline". N'invente AUCUN autre type de schéma.
 
@@ -39,6 +41,6 @@ export class NoteAnalyzer {
         `;
 
         const response = await this.llm.generate(prompt);
-        return parseJsonFromLLM<Analysis>(response, "Échec du parsing JSON lors de l'analyse de la note");
+        return parseJsonFromLLM<Analysis>(response, "[note analyzer] [error] Error while parsing JSON");
     }
 }
