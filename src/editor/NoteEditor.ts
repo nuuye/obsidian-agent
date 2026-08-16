@@ -1,6 +1,7 @@
 import { LLMProvider } from "../llm/types/LLMProvider.js";
 import { Analysis } from "../core/types/Analysis.js";
 import { mermaidSyntaxExamples } from "../constants.js";
+import { linkKnownConcepts } from "./utils/linkKnownConcepts.js";
 
 export class NoteEditor {
     constructor(private llm: LLMProvider) {}
@@ -47,12 +48,6 @@ export class NoteEditor {
         existingNotes: string[],
         onToken?: (chunk: string) => void
     ): Promise<string> {
-        const indexingPrompt =
-            existingNotes && existingNotes.length > 0
-                ? `4. LIENS : Voici la liste exacte des autres notes existantes dans le Vault : [${existingNotes.join(
-                      ", "
-                  )}]. Si un concept de cette liste est mentionné, transforme-le en lien Obsidian (ex: [[Concept]]). N'invente AUCUN lien vers des notes qui ne sont pas dans cette liste.`
-                : "";
 
         const gaps = (analysis.missingInformation ?? []).filter((m) => m.origin === "gap");
         const doubts = (analysis.missingInformation ?? []).filter((m) => m.origin === "authorDoubt");
@@ -115,7 +110,6 @@ export class NoteEditor {
         }. Le texte ajouté doit être INDISCERNABLE de l'original en termes de densité et de format — n'invente pas de titres en gras façon "listicle" si l'auteur n'en utilise pas ailleurs dans la note.
         3. Mets en gras les concepts clés de la note ou les mots qui sont importants pour comprendre un concept rapidement.
         4. Ne supprimer aucune information existante pertinente. (Tu es autorisé à supprimer ou reformuler les phrases obsolètes ou exprimant un doute selon les règles d'enrichissement/clarification si elles s'appliquent).
-        ${indexingPrompt}
         ${gapsPrompt}
         ${doubtsPrompt}
         ${gapsPrompt || doubtsPrompt ? commonGoldenRules : ""}
@@ -149,6 +143,8 @@ export class NoteEditor {
         """`;
 
         const modifiedContent = await this.llm.generate(prompt, { onToken });
-        return this.addAliases(this.cleanLLMOutput(modifiedContent), analysis.topics);
+        const cleaned = this.cleanLLMOutput(modifiedContent);
+        const withAliases = this.addAliases(cleaned, analysis.topics);
+        return linkKnownConcepts(withAliases, existingNotes);
     }
 }

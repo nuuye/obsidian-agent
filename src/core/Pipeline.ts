@@ -62,7 +62,7 @@ export class Pipeline {
         currentStatus = "Indexing Vault...";
         const vaultPath = process.env.VAULT_PATH;
         if (vaultPath) {
-            existingNotes = await this.indexer.getExistingNotes(vaultPath);
+            existingNotes = await this.indexer.getExistingNotes(vaultPath, noteTitle);
         }
         bar.update(1);
 
